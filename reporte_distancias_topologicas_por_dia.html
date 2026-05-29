@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reporte de Distancias Topologicas por Dia — BabyFace</title>
+  <style>
+    :root {
+      --bg: #f6f3ec;
+      --paper: #fffdf8;
+      --ink: #1f1f1c;
+      --muted: #5f5a52;
+      --line: #ddd4c7;
+      --accent: #0f766e;
+      --accent-2: #b45309;
+      --soft: #efe7da;
+      --shadow: 0 18px 44px rgba(61, 50, 35, 0.10);
+      --radius: 20px;
+      --mono: "SFMono-Regular", ui-monospace, Menlo, Consolas, monospace;
+      --sans: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(15, 118, 110, 0.10), transparent 28%),
+        radial-gradient(circle at top right, rgba(180, 83, 9, 0.12), transparent 24%),
+        linear-gradient(180deg, #f8f5ef 0%, #f2ede4 100%);
+      color: var(--ink);
+      font-family: var(--sans);
+      line-height: 1.65;
+    }
+
+    .page {
+      width: min(1120px, calc(100% - 40px));
+      margin: 28px auto 40px;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, rgba(15, 118, 110, 0.96), rgba(12, 74, 110, 0.95));
+      color: #f7f9f7;
+      border-radius: 30px;
+      padding: 34px 34px 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -50px -70px auto;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.10);
+      filter: blur(2px);
+    }
+
+    .eyebrow {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      opacity: 0.85;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 3vw, 3.2rem);
+      line-height: 1.08;
+      font-weight: 700;
+    }
+
+    .hero p {
+      max-width: 800px;
+      margin: 0;
+      font-size: 1.05rem;
+      color: rgba(247, 249, 247, 0.92);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-top: 22px;
+    }
+
+    .stat {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 18px;
+      padding: 14px 16px;
+      backdrop-filter: blur(4px);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 3px;
+    }
+
+    .stat span {
+      font-size: 0.95rem;
+      opacity: 0.88;
+    }
+
+    .content {
+      display: grid;
+      gap: 18px;
+      margin-top: 22px;
+    }
+
+    section {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 24px 24px 18px;
+      box-shadow: var(--shadow);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 1.5rem;
+      color: #0b4f4a;
+    }
+
+    h3 {
+      margin: 18px 0 8px;
+      font-size: 1.05rem;
+      color: #7a3f0b;
+    }
+
+    p { margin: 0 0 12px; }
+
+    ul {
+      margin: 0 0 12px 18px;
+      padding: 0;
+    }
+
+    li { margin-bottom: 6px; }
+
+    code {
+      font-family: var(--mono);
+      background: #f0ebe2;
+      border: 1px solid #e1d7c9;
+      border-radius: 8px;
+      padding: 1px 6px;
+      font-size: 0.93em;
+    }
+
+    .callout {
+      border-left: 5px solid var(--accent);
+      background: #f2f8f6;
+      border-radius: 14px;
+      padding: 14px 16px;
+      margin: 14px 0;
+    }
+
+    .warning {
+      border-left-color: var(--accent-2);
+      background: #fbf4ea;
+    }
+
+    .decision-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.98rem;
+      margin-top: 10px;
+    }
+
+    .decision-table th,
+    .decision-table td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .decision-table th {
+      color: #234c49;
+      font-size: 0.93rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .figure-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    figure {
+      margin: 0;
+      background: #faf6ef;
+      border: 1px solid #e5dccf;
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid #eadfce;
+      background: white;
+    }
+
+    figcaption {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .pipeline {
+      display: grid;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 50px minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+      padding: 14px;
+      background: linear-gradient(180deg, #fffdf8 0%, #f7f1e7 100%);
+      border: 1px solid #e4d8c8;
+      border-radius: 16px;
+    }
+
+    .step-number {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #0c4a6e);
+      color: white;
+      font-family: var(--mono);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .step h3 {
+      margin: 0 0 4px;
+      color: #0b4f4a;
+      font-size: 1.02rem;
+    }
+
+    .step p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.92rem;
+      margin-top: 18px;
+    }
+
+    @media (max-width: 720px) {
+      .page { width: min(100%, calc(100% - 20px)); }
+      .hero, section { padding: 20px; }
+      .step { grid-template-columns: 1fr; }
+      .step-number { margin-bottom: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div class="eyebrow">BabyFace · Serie temporal topologica diaria</div>
+      <h1>Reporte de distancias topologicas por dia</h1>
+      <p>
+        Este reporte resume el notebook <code>04_distancias_topologicas_por_dia_id6_id10.ipynb</code>.
+        El objetivo fue calcular diagramas de persistencia por niño y por día para <code>ID6</code> a <code>ID10</code>,
+        comparar días consecutivos con distancia de Wasserstein y detectar en qué transiciones temporales aparecen los cambios topológicos más marcados.
+      </p>
+      <div class="summary-grid">
+        <div class="stat">
+          <strong>5 niños</strong>
+          <span>ID6 a ID10</span>
+        </div>
+        <div class="stat">
+          <strong>78 días</strong>
+          <span>Nubes diarias analizadas</span>
+        </div>
+        <div class="stat">
+          <strong>73 transiciones</strong>
+          <span>Comparaciones consecutivas entre días</span>
+        </div>
+        <div class="stat">
+          <strong>12 cambios fuertes</strong>
+          <span>Umbral descriptivo: media + 1 sd</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="content">
+      <section>
+        <h2>Pregunta que responde este análisis</h2>
+        <p>
+          La pregunta central ya no es si un grupo tiene una topología distinta a otro grupo, sino:
+          <strong>¿entre qué días consecutivos cambia más la forma topológica de la trayectoria afectiva de cada niño?</strong>
+        </p>
+        <div class="callout">
+          La unidad de análisis es <code>(niño, día)</code>. Cada día se representa como una nube de puntos en el espacio
+          <code>valence-arousal</code>, y esa nube genera un diagrama de persistencia propio.
+        </div>
+        <p>
+          Después, los diagramas de un mismo niño se comparan día a día. Una distancia baja sugiere que dos días tienen una organización topológica parecida;
+          una distancia alta sugiere una reorganización más fuerte de la trayectoria afectiva.
+        </p>
+      </section>
+
+      <section>
+        <h2>Pipeline del notebook</h2>
+        <div class="pipeline">
+          <div class="step">
+            <div class="step-number">01</div>
+            <div>
+              <h3>Carga y limpieza del archivo</h3>
+              <p>
+                El notebook busca <code>DFBabyFaceValidacion.xlsx</code>, <code>DataFrameBabyFaceValidacion.xlsx</code> o <code>DataFrameBabyFaceValidacion.csv</code>.
+                Limpia nombres de columnas, estandariza <code>id</code>, preserva <code>dia_original</code> y convierte <code>dia</code> a un número usable en <code>dia_num</code>.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">02</div>
+            <div>
+              <h3>Reorganización a formato largo</h3>
+              <p>
+                Se toman todas las etapas afectivas disponibles del día: <code>inicio</code>, <code>p1_before</code>, <code>p1_during</code>, <code>p1_after</code>,
+                <code>p2_before</code>, <code>p2_during</code>, <code>p2_after</code> y <code>final</code>. Cada etapa aporta un punto
+                <code>(valence, arousal)</code> y, si falta alguno de esos dos valores, ese punto se descarta.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">03</div>
+            <div>
+              <h3>Estandarización global</h3>
+              <p>
+                Todos los puntos válidos del dataset se escalan con un único <code>StandardScaler</code>.
+                Esto hace comparables los diagramas entre niños y entre días en el mismo espacio geométrico.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">04</div>
+            <div>
+              <h3>Nubes diarias por niño</h3>
+              <p>
+                Para cada <code>id</code> y <code>dia_num</code>, se agrupan todas las etapas disponibles de ese día.
+                Si un mismo día aparece con etiquetas como <code>4E</code> y <code>4P</code>, ambas se consolidan en una sola nube diaria.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">05</div>
+            <div>
+              <h3>Diagramas de persistencia diarios</h3>
+              <p>
+                Para cada nube diaria se calcula homología persistente con <code>ripser(..., maxdim=1)</code>.
+                Se conservan diagramas <code>H0</code> y <code>H1</code>, filtrando únicamente las features finitas y con persistencia positiva.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">06</div>
+            <div>
+              <h3>Distancias entre días</h3>
+              <p>
+                La comparación principal se hace entre días consecutivos. Para cada transición se calcula:
+                <code>Wasserstein(H0)</code>, <code>Wasserstein(H1)</code> y una distancia total definida como la suma de ambas.
+              </p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">07</div>
+            <div>
+              <h3>Promedios y cambios fuertes</h3>
+              <p>
+                El notebook resume las distancias de dos maneras: promedio dentro de cada niño y promedio por transición temporal entre niños.
+                Además, marca un cambio fuerte cuando la distancia total supera <code>media + 1 desviación estándar</code> del propio niño.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Decisiones técnicas clave</h2>
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th>Decisión</th>
+              <th>Implementación en el notebook</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Población analizada</td>
+              <td>Solo los niños <code>ID6</code>, <code>ID7</code>, <code>ID8</code>, <code>ID9</code> e <code>ID10</code>.</td>
+            </tr>
+            <tr>
+              <td>Unidad temporal</td>
+              <td>El valor numérico de <code>dia_num</code>. Las variantes textuales del mismo día se consolidan.</td>
+            </tr>
+            <tr>
+              <td>Unidad geométrica</td>
+              <td>Nube diaria de puntos <code>(valence_scaled, arousal_scaled)</code>.</td>
+            </tr>
+            <tr>
+              <td>Construcción del día</td>
+              <td>Se usan todas las etapas afectivas válidas disponibles dentro del mismo día.</td>
+            </tr>
+            <tr>
+              <td>Homología persistente</td>
+              <td><code>ripser</code> con <code>maxdim=1</code>; dimensiones analizadas: <code>H0</code> y <code>H1</code>.</td>
+            </tr>
+            <tr>
+              <td>Filtrado del diagrama</td>
+              <td>Se eliminan puntos con muerte infinita y persistencia numéricamente nula.</td>
+            </tr>
+            <tr>
+              <td>Métrica de comparación</td>
+              <td>Distancia de Wasserstein por dimensión y una distancia total igual a <code>H0 + H1</code>.</td>
+            </tr>
+            <tr>
+              <td>Promedio principal</td>
+              <td>Promedio de distancias entre días consecutivos dentro de cada niño.</td>
+            </tr>
+            <tr>
+              <td>Criterio de cambio fuerte</td>
+              <td><code>distance_total &gt; mean(distance_total_child) + sd(distance_total_child)</code>.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="callout warning">
+          La señal está dominada por <code>H0</code>. En varios días hay muy pocos puntos, y eso reduce o anula la contribución de <code>H1</code>.
+          En los resúmenes actuales, la mayor parte del cambio proviene de cómo se conectan los componentes de la nube diaria.
+        </div>
+      </section>
+
+      <section>
+        <h2>Resultados principales</h2>
+        <p>
+          En total se construyeron <strong>78 nubes diarias</strong> y se compararon <strong>73 transiciones consecutivas</strong>.
+          El rango de puntos por día fue de <strong>1 a 13</strong>, lo que explica por qué algunos días producen una señal topológica muy simple.
+        </p>
+        <table class="decision-table">
+          <thead>
+            <tr>
+              <th>Niño</th>
+              <th>Días</th>
+              <th>Transiciones</th>
+              <th>Promedio distancia total</th>
+              <th>Máximo observado</th>
+              <th>Transiciones fuertes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>ID6</code></td>
+              <td>9</td>
+              <td>8</td>
+              <td>1.191</td>
+              <td>2.616</td>
+              <td><code>4-&gt;5</code></td>
+            </tr>
+            <tr>
+              <td><code>ID7</code></td>
+              <td>20</td>
+              <td>19</td>
+              <td>2.472</td>
+              <td>4.992</td>
+              <td><code>9-&gt;10</code>, <code>10-&gt;11</code>, <code>16-&gt;17</code></td>
+            </tr>
+            <tr>
+              <td><code>ID8</code></td>
+              <td>20</td>
+              <td>19</td>
+              <td>1.611</td>
+              <td>3.762</td>
+              <td><code>1-&gt;2</code>, <code>6-&gt;7</code>, <code>7-&gt;8</code></td>
+            </tr>
+            <tr>
+              <td><code>ID9</code></td>
+              <td>14</td>
+              <td>13</td>
+              <td>1.269</td>
+              <td>3.167</td>
+              <td><code>5-&gt;6</code>, <code>7-&gt;8</code></td>
+            </tr>
+            <tr>
+              <td><code>ID10</code></td>
+              <td>15</td>
+              <td>14</td>
+              <td>2.168</td>
+              <td>3.704</td>
+              <td><code>2-&gt;3</code>, <code>5-&gt;6</code>, <code>6-&gt;7</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="callout">
+          <strong>Lectura rápida:</strong> <code>ID7</code> fue el niño con mayor distancia media entre días consecutivos
+          (<code>2.472</code>), mientras que la transición promedio más alta entre niños fue <code>16-&gt;17</code> con una
+          distancia total media de <code>3.236</code>, aunque solo está sostenida por dos niños.
+        </div>
+
+        <p>
+          Si se busca un tramo temporal compartido entre varios niños, las transiciones <code>6-&gt;7</code> y <code>7-&gt;8</code>
+          también destacan porque mantienen distancias altas y están presentes en los cinco niños del subconjunto.
+        </p>
+      </section>
+
+      <section>
+        <h2>Series de distancias y promedio temporal</h2>
+        <div class="figure-grid">
+          <figure style="grid-column: 1 / -1;">
+            <img src="04_distancias_topologicas_por_dia_outputs/serie_distancias_consecutivas_id6_id10.png" alt="Serie de distancias consecutivas por niño">
+            <figcaption>
+              Figura 1. Distancia topológica total entre días consecutivos para cada niño. La línea punteada marca el umbral descriptivo
+              <code>media + 1 sd</code> dentro del propio niño y los puntos rojos marcan transiciones fuertes.
+            </figcaption>
+          </figure>
+          <figure style="grid-column: 1 / -1;">
+            <img src="04_distancias_topologicas_por_dia_outputs/promedio_distancias_por_transicion.png" alt="Promedio de distancia por transición">
+            <figcaption>
+              Figura 2. Promedio de distancia total por transición temporal al agrupar niños que comparten la misma transición.
+              Esta vista ayuda a identificar intervalos donde varios niños cambian al mismo tiempo.
+            </figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>Diagramas diarios por niño</h2>
+        <p>
+          Cada figura reúne los diagramas de persistencia calculados día por día para un solo niño.
+          Esto permite ver directamente si algunos días tienen nubes más simples, más dispersas o con estructura cíclica más marcada.
+        </p>
+        <div class="figure-grid">
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/diagramas_por_dia_ID6.png" alt="Diagramas por día de ID6">
+            <figcaption><code>ID6</code>. Días 1 a 9.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/diagramas_por_dia_ID7.png" alt="Diagramas por día de ID7">
+            <figcaption><code>ID7</code>. Días 2 a 21 con consolidación de etiquetas como <code>4E / 4P</code>.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/diagramas_por_dia_ID8.png" alt="Diagramas por día de ID8">
+            <figcaption><code>ID8</code>. Días 1 a 20.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/diagramas_por_dia_ID9.png" alt="Diagramas por día de ID9">
+            <figcaption><code>ID9</code>. Días 2 a 15.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/diagramas_por_dia_ID10.png" alt="Diagramas por día de ID10">
+            <figcaption><code>ID10</code>. Días 1 a 16, con ausencia del día 12 en el archivo actual.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>Heatmaps de distancias por niño</h2>
+        <p>
+          Los heatmaps muestran la matriz completa de distancias entre todos los pares de días de un mismo niño.
+          Aunque el resumen principal usa días consecutivos, estas matrices dejan ver si hay bloques temporales estables y días aislados más lejanos del resto.
+        </p>
+        <div class="figure-grid">
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/heatmap_distancias_ID6.png" alt="Heatmap de distancias de ID6">
+            <figcaption><code>ID6</code>. La transición <code>4-&gt;5</code> aparece como el salto principal.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/heatmap_distancias_ID7.png" alt="Heatmap de distancias de ID7">
+            <figcaption><code>ID7</code>. El tramo final concentra varios contrastes altos.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/heatmap_distancias_ID8.png" alt="Heatmap de distancias de ID8">
+            <figcaption><code>ID8</code>. Destacan los cambios alrededor de <code>1-&gt;2</code> y <code>6-&gt;8</code>.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/heatmap_distancias_ID9.png" alt="Heatmap de distancias de ID9">
+            <figcaption><code>ID9</code>. La mitad de la serie contiene los contrastes más marcados.</figcaption>
+          </figure>
+          <figure>
+            <img src="04_distancias_topologicas_por_dia_outputs/heatmap_distancias_ID10.png" alt="Heatmap de distancias de ID10">
+            <figcaption><code>ID10</code>. Se observa una zona más inestable entre los días 2 y 7.</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section>
+        <h2>Archivos que deja el notebook</h2>
+        <ul>
+          <li><code>daily_point_clouds_id6_id10.csv</code>: resumen de días disponibles y número de puntos por nube diaria.</li>
+          <li><code>distancias_consecutivas_id6_id10.csv</code>: distancias consecutivas por niño y por transición.</li>
+          <li><code>promedio_distancias_por_nino.csv</code>: promedio de distancias dentro de cada niño.</li>
+          <li><code>promedio_distancias_por_transicion.csv</code>: promedio de distancias por transición temporal compartida.</li>
+          <li><code>cambios_fuertes_descriptivos.csv</code>: transiciones que superan el umbral descriptivo.</li>
+          <li><code>distance_matrix_total_ID*.csv</code>: matriz total de distancias por niño.</li>
+          <li>PNGs de diagramas por día, heatmaps y series temporales para inspección visual.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Cómo leer este reporte</h2>
+        <p>
+          Este análisis es útil para responder <strong>cuándo cambia más la forma topológica</strong> de la trayectoria afectiva de cada niño,
+          no para afirmar causalidad ni para identificar el instante exacto de aceptación del alimento.
+        </p>
+        <div class="callout warning">
+          Si la pregunta futura es “¿qué ocurre exactamente antes y después del primer día de aceptación?”, entonces el pipeline tendría que
+          reindexarse alrededor de ese evento y no solamente alrededor del número de día.
+        </div>
+        <p class="small">
+          Reporte generado a partir de las salidas de <code>04_distancias_topologicas_por_dia_id6_id10.ipynb</code> y de la carpeta
+          <code>04_distancias_topologicas_por_dia_outputs/</code>.
+        </p>
+      </section>
+    </div>
+
+    <div class="footer">
+      BabyFace · reporte descriptivo de distancias topológicas diarias
+    </div>
+  </main>
+</body>
+</html>
